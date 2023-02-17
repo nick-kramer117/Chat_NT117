@@ -17,7 +17,7 @@
 static _Atomic unsigned int cli_count = 0;
 static int uid = 10;
 
-// Client structure
+// Client structure.
 typedef struct
 {
 	struct sockaddr_in address;
@@ -32,7 +32,7 @@ pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void str_overwrite_stdout()
 {
-	printf("\r%s", "> ");
+	printf("\r%s", "[>] - ");
 	fflush(stdout);
 }
 
@@ -58,7 +58,7 @@ void print_client_addr(struct sockaddr_in addr)
         (addr.sin_addr.s_addr & 0xff000000) >> 24);
 }
 
-// Add clients to queue
+// Add clients to queue.
 void queue_add(client_t *cl)
 {
 	pthread_mutex_lock(&clients_mutex);
@@ -75,7 +75,7 @@ void queue_add(client_t *cl)
 	pthread_mutex_unlock(&clients_mutex);
 }
 
-// Remove clients to queue
+// Remove clients to queue.
 void queue_remove(int uid)
 {
 	pthread_mutex_lock(&clients_mutex);
@@ -95,7 +95,7 @@ void queue_remove(int uid)
 	pthread_mutex_unlock(&clients_mutex);
 }
 
-// Send message to all clients except sender
+// Send message to all clients except sender.
 void send_message(char *s, int uid)
 {
 	pthread_mutex_lock(&clients_mutex);
@@ -118,7 +118,30 @@ void send_message(char *s, int uid)
 	pthread_mutex_unlock(&clients_mutex);
 }
 
-// Handle all communication with the client
+// Send message to client info sender.
+void send_message_u(char *s, int uid)
+{
+	pthread_mutex_lock(&clients_mutex);
+
+	for(int i=0; i<MAX_CLIENTS; ++i)
+        {
+                if(clients[i])
+                {
+                        if(clients[i]->uid == uid)
+                        {
+                                if(write(clients[i]->sockfd, s, strlen(s)) < 0)
+                                {
+                                        perror("[!] - ERROR: write to descriptor failed");
+                                        break;
+                                }
+                        }
+                }
+        }
+
+	pthread_mutex_unlock(&clients_mutex);
+}
+
+// Handle all communication with the client.
 void *handle_client(void *arg)
 {
 	char buff_out[BUFFER_SZ];
@@ -128,7 +151,7 @@ void *handle_client(void *arg)
 	cli_count++;
 	client_t *cli = (client_t *)arg;
 
-	// Name
+	// Name.
 	if(recv(cli->sockfd, name, 32, 0) <= 0 || strlen(name) <  2 || strlen(name) >= 32-1)
 	{
 		printf("[!] - Didn't enter the name.\n");
@@ -139,7 +162,6 @@ void *handle_client(void *arg)
 		strcpy(cli->name, name);
 		sprintf(buff_out, "%s has joined\n", cli->name);
 		printf("%s", buff_out);
-		send_message(buff_out, cli->uid);
 	}
 
 	bzero(buff_out, BUFFER_SZ);
@@ -154,19 +176,30 @@ void *handle_client(void *arg)
 		int receive = recv(cli->sockfd, buff_out, BUFFER_SZ, 0);
 		if (receive > 0)
 		{
-			if(strlen(buff_out) > 0)
+
+			//printf("[*] - str: %s", buff_out);
+
+			if(strncmp(buff_out, "SRV:con", 7) == 0 && strlen(buff_out) > 0)
+			{
+				sprintf(buff_out, "SRV_BOT: ID - %u | Username: %s \n", cli->uid ,cli->name);
+				send_message_u(buff_out, cli->uid);
+			} //if( && v == '0')
+			else if(strlen(buff_out) > 0)
 			{
 				send_message(buff_out, cli->uid);
-
 				str_trim_lf(buff_out, strlen(buff_out));
 				printf("%s -> %s\n", buff_out, cli->name);
 			}
+			else
+			{
+				//todo:
+			}
 		}
-		else if (receive == 0 || strcmp(buff_out, "exit") == 0)
+		else if (receive == 0 || strcmp(buff_out, "CMD:exit") == 0)
 		{
+			// Output: left user.
 			sprintf(buff_out, "%s has left\n", cli->name);
 			printf("%s", buff_out);
-			send_message(buff_out, cli->uid);
 			leave_flag = 1;
 		}
 		else
@@ -178,7 +211,7 @@ void *handle_client(void *arg)
 		bzero(buff_out, BUFFER_SZ);
 	}
 
- 	// Delete client from queue and yield thread
+	// Delete client from queue and yield thread.
 	close(cli->sockfd);
 	queue_remove(cli->uid);
   	free(cli);
@@ -190,7 +223,7 @@ void *handle_client(void *arg)
 
 int main(int argc, char **argv)
 {
-	// Standard parameters
+	// Standard parameters.
 	char *ip = "127.0.0.1";
 	int port = 10117;
 	char *pswd = "117";
@@ -233,13 +266,13 @@ int main(int argc, char **argv)
   	struct sockaddr_in cli_addr;
   	pthread_t tid;
 
-  	// Socket settings
+	// Socket settings.
   	listenfd = socket(AF_INET, SOCK_STREAM, 0);
   	serv_addr.sin_family = AF_INET;
   	serv_addr.sin_addr.s_addr = inet_addr(ip);
   	serv_addr.sin_port = htons(port);
 
-  	// Ignore pipe signals
+	// Ignore pipe signals.
 	signal(SIGPIPE, SIG_IGN);
 
 	if(setsockopt(listenfd, SOL_SOCKET,(SO_REUSEPORT | SO_REUSEADDR),(char*)&option,sizeof(option)) < 0)
@@ -248,28 +281,28 @@ int main(int argc, char **argv)
     		return EXIT_FAILURE;
 	}
 
-	// Bind
+	// Bind.
   	if(bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0)
 	{
     		perror("[!] - ERROR: Socket binding failed!");
     		return EXIT_FAILURE;
   	}
 
-  	// Listen
+	// Listen.
   	if (listen(listenfd, 10) < 0)
 	{
     		perror("[!] - ERROR: Socket listening failed!");
     		return EXIT_FAILURE;
 	}
 
-	printf("--=== WELCOME TO THE CHAT NT117 (Server) ===--\n");
+	printf("--=== WELCOME TO THE CHAT NT117 v0 (Server v0.1.4) ===--\n");
 
 	while(1)
 	{
 		socklen_t clilen = sizeof(cli_addr);
 		connfd = accept(listenfd, (struct sockaddr*)&cli_addr, &clilen);
 
-		// Check if max clients is reached
+		// Check if max clients is reached.
 		if((cli_count + 1) == MAX_CLIENTS)
 		{
 			printf("[?] - Max clients reached. Rejected: ");
@@ -279,17 +312,17 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		// Client settings
+		// Client settings.
 		client_t *cli = (client_t *)malloc(sizeof(client_t));
 		cli->address = cli_addr;
 		cli->sockfd = connfd;
 		cli->uid = uid++;
 
-		// Add client to the queue and fork thread
+		// Add client to the queue and fork thread.
 		queue_add(cli);
 		pthread_create(&tid, NULL, &handle_client, (void*)cli);
 
-		// Reduce CPU usage
+		// Reduce CPU usage.
 		sleep(1);
 	}
 
