@@ -189,7 +189,7 @@ void recv_msg_crpt_handler(char* pswd)
 			}
 			else
 			{
-				fc_xor(message, pswd, decryt);
+				fc_xor(message, pswd, decrypt);
 				printf("%s", decrypt);
 				str_overwrite_stdout();
 			}
@@ -278,7 +278,7 @@ int main(int argc, char **argv)
 	// Send name to Server.
 	send(sockfd, name, 32, 0);
 
-	printf("--=== WELCOME TO THE CHAT NT117 v0 (Client v0.1.6) ===--\n");
+	printf("--=== WELCOME TO THE CHAT NT117 v0 (Client v0.1.7) ===--\n");
 
 	// Creat threads Send||Recive with||not crypt masseges.
 	if(argc == 4)
@@ -330,3 +330,4 @@ int main(int argc, char **argv)
 	close(sockfd);
 	return EXIT_SUCCESS;
 }
+

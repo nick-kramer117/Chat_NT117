@@ -176,14 +176,11 @@ void *handle_client(void *arg)
 		int receive = recv(cli->sockfd, buff_out, BUFFER_SZ, 0);
 		if (receive > 0)
 		{
-
-			//printf("[*] - str: %s", buff_out);
-
 			if(strncmp(buff_out, "SRV:con", 7) == 0 && strlen(buff_out) > 0)
 			{
 				sprintf(buff_out, "SRV_BOT: ID - %u | Username: %s \n", cli->uid ,cli->name);
 				send_message_u(buff_out, cli->uid);
-			} //if( && v == '0')
+			}
 			else if(strlen(buff_out) > 0)
 			{
 				send_message(buff_out, cli->uid);
@@ -257,8 +254,8 @@ int main(int argc, char **argv)
 	}
 
 	printf("Server IP address: %s \n", ip);
-        printf("Server Port: %d \n", port);
-        printf("Server Password: %s \n", pswd);
+	printf("Server Port: %d \n", port);
+	printf("Server Password: %s \n", pswd);
 
 	int option = 1;
 	int listenfd = 0, connfd = 0;
@@ -295,7 +292,7 @@ int main(int argc, char **argv)
     		return EXIT_FAILURE;
 	}
 
-	printf("--=== WELCOME TO THE CHAT NT117 v0 (Server v0.1.4) ===--\n");
+	printf("--=== WELCOME TO THE CHAT NT117 v0 (Server v0.1.5) ===--\n");
 
 	while(1)
 	{
