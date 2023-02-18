@@ -13,8 +13,6 @@
 
 `LICENCIA` = **GPLv3**, en la carpeta *src/* hay archivos bajo otras licencias libres.
 
-![Overview_ChatNT117.svg](Overview_ChatNT117.svg)
-
 ### Command info: Client. ###
 
 * CMD:exit - exit client app.
