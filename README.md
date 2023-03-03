@@ -53,7 +53,7 @@ Local server start-up (default use localhost/127.0.0.1 and port 10117).
 
 ### Owerview "Chatroom NT117."
 
-![](Images/Overview_ChatNT117.svg)<br>
+![](Images/Overview_ChatNT117.png)<br>
 
 ### TODO list: Client.
 
