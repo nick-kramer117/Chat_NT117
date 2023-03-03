@@ -253,9 +253,11 @@ int main(int argc, char **argv)
 		printf("[+] - Set default setting.\n");
 	}
 
+	printf("\033[90m");
 	printf("Server IP address: %s \n", ip);
 	printf("Server Port: %d \n", port);
 	printf("Server Password: %s \n", pswd);
+	printf("\033[0m");
 
 	int option = 1;
 	int listenfd = 0, connfd = 0;
@@ -292,7 +294,7 @@ int main(int argc, char **argv)
     		return EXIT_FAILURE;
 	}
 
-	printf("--=== WELCOME TO THE CHAT NT117 v0 (Server v0.1.5) ===--\n");
+	printf("--=== WELCOME TO THE CHAT NT117 v0 (Server v0.1.6) ===--\n");
 
 	while(1)
 	{

@@ -74,7 +74,11 @@ void send_msg_handler()
     		fgets(message, LENGTH, stdin);
     		str_trim_lf(message, LENGTH);
 
-		if (strcmp(message, "CMD:exit") == 0)
+		if(strcmp(message, "CMD:help") == 0)
+		{
+			printHelp("-r");
+		}
+		else if (strcmp(message, "CMD:exit") == 0)
 		{
 			break;
     		}
@@ -115,15 +119,19 @@ void send_msg_crpt_handler(char* pswd)
 			sprintf(buffer, "%s \n", message);
 			send(sockfd, buffer, strlen(buffer), 0);
 		}
-		else if (strcmp(message, "CMD:exit") == 0)
+		else if(strcmp(message, "CMD:help") == 0)
+		{
+			printHelp("-r");
+		}
+		else if(strcmp(message, "CMD:exit") == 0)
 		{
 			break;
 		}
-		else if (strcmp(message, "CMD:pswd") == 0)
+		else if(strcmp(message, "CMD:pswd") == 0)
 		{
 			printf("[*] - Key: %s \n", pswd);
 		}
-		else if (strcmp(message, "CMD:clear") == 0)
+		else if(strcmp(message, "CMD:clear") == 0)
 		{
 			system("clear");
 			printf("[+] - Cleaned... \n");
@@ -157,13 +165,9 @@ void recv_msg_handler()
 			printf("%s \n", message);
 			str_overwrite_stdout();
 		}
-		else if(receive == 0)
-		{
-			break;
-		}
 		else
 		{
-                        // todo: error - recive!
+			break;	
 		}
 		memset(message, 0, sizeof(message));
 	}
@@ -184,7 +188,9 @@ void recv_msg_crpt_handler(char* pswd)
 
 			if(strncmp(message, "SRV_BOT", 7) == 0)
 			{
+				printf("\033[96m");
 				printf("%s", message);
+				printf("\033[0m");
 				str_overwrite_stdout();
 			}
 			else
@@ -195,57 +201,156 @@ void recv_msg_crpt_handler(char* pswd)
 			}
 
 		}
-		else if(receive == 0)
-		{
-			break;
-		}
 		else
 		{
-                        // todo:
+			break;
 		}
 		memset(message, 0, sizeof(message));
 		memset(decrypt, 0, sizeof(decrypt));
 	}
 }
 
+// Output header text.
+void printHeader(char* st, int v, int vw, int vu )
+{
+	printf("--=== WELCOME TO THE CHAT NT117 v%i (%s %i.%i.%i) ===--\n", v, st, v, vw, vu);
+}
+
+// Output text help.
+int printHelp(char* key)
+{
+	printf("\033[92m");
+	printf("[i] - Help menu. v0.0.2\n");
+	printf("\033[0m");
+	if(key == "-h")
+	{
+		printf("[*] - Help: Starting...\n");
+		printf("Startup description (simple):./client_NT117 -cd < ip address > < port >\n");
+		printf("Startup description (with crypt message):./client_NT117 -cs < ip address > < port > < encryption key >\n");
+		printf("\033[90mStarting the help menu:./client_NT117 -h (or --help).\033[0m\n");
+		printf("\033[93m");
+		printf("Reference run (with crypt message):./client_NT117 -cs 127.0.0.1 10117 uArtScam1012 \n");
+		printf("\033[0m");
+		printf("< -h > or < --help > \033[90m........|\033[0m Call help menu.\n");
+		printf("< -cd > \033[90m.....................|\033[0m Simple connection.\n");
+		printf("< -cs > \033[90m.....................|\033[0m Connection with crypt message.\n");
+		printf("< -cs -dd > \033[90m.................|\033[0m Connection with crypt message (Default setting 127.0.0.1:10117.\n");
+		printf("< ip address > \033[90m..............|\033[0m Your ip address IPv4 (defult localhost:127.0.0.1).\n");
+		printf("< port > \033[90m....................|\033[0m Your port (default port = 10117).\n");
+		printf("< encryption key > \033[90m..........|\033[0m Message encryption key (defult key = 117).\n");
+		printf("\033[0m");
+		printf("To call help when the client is running, type \"CMD:help\" and press \"Enter\"\n");
+	}
+	else if(key == "-r")
+	{
+		// TODO: List helper for runtime.
+		printf("[*] - Help: In running...\n");
+		printf("=> Commands description: < object >:< key >\n");
+		printf("\033[94m");
+		printf("=> Objects list: CMD (Command for client app), SRV (Server bot).\n");
+		printf("\033[0m");
+		printf("\033[93m");
+		printf("-> Descriptions keys - CMD:< key > (CMD:help and press \"Enter\").\n");
+		printf("\033[0m");
+		printf("CMD:help \033[90m....................|\033[0m Call helper.\n");
+		printf("CMD:clear \033[90m...................|\033[0m Clear console.\n");
+		printf("CMD:exit \033[90m....................|\033[0m Exit application.\n");
+		printf("CMD:pswd \033[90m....................|\033[0m Show your password.\n");
+		printf("\033[93m");
+		printf("-> Descriptions keys - SRV:< key > (SRV:con and press \"Enter\").\n");
+		printf("\033[0m");
+		printf("SRV:con \033[90m.....................|\033[0m Find out the received server ID.\n");
+		printf("[e] - End help.\n");
+	}
+}
+
 int main(int argc, char **argv)
 {
+	// Local constants.
+	const int Vesrsion = 0;
+	const char *AppName = "Client";
+	const int Release = 1;
+	const int Revision = 8;
+
 	// Standard parameters.
 	char *ip = "127.0.0.1";
 	int port = 10117;
 	char *pswd = "117";
 
-	if(argc == 4)
+	// Check keys.
+	if(strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
 	{
-		printf("[+] - Set User setting.\n");
-		ip = argv[1];
-		port = atoi(argv[2]);
-		pswd = argv[3];
+		printHeader(AppName, Vesrsion, Release, Revision);
+		printHelp("-h");
+		return EXIT_SUCCESS;
 	}
-	else if(argc == 3)
+	else if(strcmp(argv[1], "-cd") == 0)
 	{
-		printf("[+] - Set User setting.\n");
-		ip = argv[1];
-		port = atoi(argv[2]);
+		// Simple setting connection ([-cd] - Connection Default).
+		if(argc == 4)
+		{
+			// Set < id addres > , < port > .
+			printf("[+] - Set User setting.\n");
+			ip = argv[2];
+			port = atoi(argv[3]);
+		}
+		else if(argc == 3)
+		{
+			// Set < id addres > .
+			printf("[+] - Set User setting.\n");
+			ip = argv[2];
+		}
+		else if(argc > 4)
+		{
+			// Output msg "Error key".
+			printf("\033[91m");
+			printf("[!] - Error ENTER KEY!\n");
+			return EXIT_FAILURE;
+		}
+		else
+		{
+			printf("[+] - Set default setting.\n");
+		}
 	}
-	else if(argc == 2)
+	else if(strcmp(argv[1], "-cs") == 0)
 	{
-		printf("[+] - Set User setting.\n");
-		ip = argv[1];
-	}
-	else if(argc > 4)
-	{
-		printf("[!] - Error ENTER KEY!\n");
-		return EXIT_FAILURE;
+		// Conectino with crypt messages ([-cs] - Connection Secured).
+		if(argc == 5)
+		{
+			// Set < id addres > , < port > , < pswd > .
+			printf("[+] - Set User setting.\n");
+			ip = argv[2];
+			port = atoi(argv[3]);
+			pswd = argv[4];
+		}
+		else if(argc == 4 && strcmp(argv[2], "-dd") == 0)
+		{
+			// Set < -dd > , < pswd > .
+			printf("[+] - Set default setting.\n");
+			pswd = argv[3];
+		}
+		else
+		{
+			// Output msg "Error secure key".
+			printf("\033[91m");
+			printf("[!] - Error ENTER Secure KEY!\n");
+			return EXIT_FAILURE;
+		}
 	}
 	else
 	{
-		printf("[+] - Set default setting.\n");
+		printf("\033[91m");
+    		printf("[!] - Pleace set key for run Server!!!\n");
+    		printf("[?] - Helper key -h or --help.\n");
+    		return EXIT_SUCCESS;
 	}
 
+	// Output client options.
+	printf("\033[90m");
 	printf("Server IP address: %s \n", ip);
 	printf("Server Port: %d \n", port);
 	printf("Server Password: %s \n", pswd);
+	printf("\033[0m");
 
 	signal(SIGINT, catch_ctrl_c_and_exit);
 
@@ -278,16 +383,17 @@ int main(int argc, char **argv)
 	// Send name to Server.
 	send(sockfd, name, 32, 0);
 
-	printf("--=== WELCOME TO THE CHAT NT117 v0 (Client v0.1.7) ===--\n");
+	// Output header text.
+	printHeader(AppName, Vesrsion, Release, Revision);
 
-	// Creat threads Send||Recive with||not crypt masseges.
-	if(argc == 4)
+	// Creat threads Send || Recive with || not crypt masseges.
+	if(strcmp(argv[1], "-cs") == 0)
 	{
 		// Crypt thread Send.
 		pthread_t send_msg_thread;
 		if(pthread_create(&send_msg_thread, NULL, (void *) send_msg_crpt_handler, pswd) != 0)
 		{
-			printf("[!] - ERROR: pthread!\n");
+			printf("[!] - ERROR: pthread (Send)!\n");
 			return EXIT_FAILURE;
 		}
 
@@ -295,7 +401,7 @@ int main(int argc, char **argv)
 		pthread_t recv_msg_thread;
 		if(pthread_create(&recv_msg_thread, NULL, (void *) recv_msg_crpt_handler, pswd) != 0)
 		{
-			printf("[!] - ERROR: pthread!\n");
+			printf("[!] - ERROR: pthread (Recive)!\n");
 			return EXIT_FAILURE;
 		}
 	}
@@ -305,7 +411,7 @@ int main(int argc, char **argv)
 		pthread_t send_msg_thread;
 		if(pthread_create(&send_msg_thread, NULL, (void *) send_msg_handler, NULL) != 0)
 		{
-			printf("[!] - ERROR: pthread!\n");
+			printf("[!] - ERROR: pthread (Send)!\n");
 			return EXIT_FAILURE;
 		}
 
@@ -313,7 +419,7 @@ int main(int argc, char **argv)
 		pthread_t recv_msg_thread;
 		if(pthread_create(&recv_msg_thread, NULL, (void *) recv_msg_handler, NULL) != 0)
 		{
-			printf("[!] - ERROR: pthread!\n");
+			printf("[!] - ERROR: pthread (Recive)!\n");
 			return EXIT_FAILURE;
 		}
 	}
@@ -330,4 +436,3 @@ int main(int argc, char **argv)
 	close(sockfd);
 	return EXIT_SUCCESS;
 }
-
