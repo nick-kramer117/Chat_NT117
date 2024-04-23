@@ -23,6 +23,9 @@ Run the make command (in the repository directory).
 
 ### (Server) How do you get it up and running?
 
+Start the server with the parameters: Host ip address and port, server key (defualt key "117")
+    $ ./server_NT117 <host ip address> <host port> <server key>
+
 Start the server with the parameters: Host ip address and port.
     $ ./server_NT117 <host ip address> <host port>
     
@@ -57,18 +60,17 @@ Local server start-up (default use localhost/127.0.0.1 and port 10117).
 
 ### TODO list: Client.
 
-x Refine text encryption/decryption methods.
-x Add a helper.
+x Refine text encryption/decryption methods.<br>
+x Add a helper.<br>
 * Add the ability to write only one user.
 * Add ability to change encryption keys in runtime mode.
 * Create themes (text selections) for the console.
 
 ### TODO list: Server.
-
-* Obtaining a key, to access the server.
+x Obtaining a key, to access the server.<br>
 * Create a list of users.
 * Refinement SRV bot - ping, information about users.
 
-### Screenshot testing ChatroomNT117
+### Screenshot testing ChatroomNT117 (last mode)
 
 ![](Images/ChatroomNT117_Test.png)<br>

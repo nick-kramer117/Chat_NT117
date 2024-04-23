@@ -15,6 +15,7 @@
 volatile sig_atomic_t flag = 0;
 int sockfd = 0;
 char name[32];
+char key[128];
 
 void str_overwrite_stdout()
 {
@@ -74,6 +75,7 @@ void send_msg_handler()
     		fgets(message, LENGTH, stdin);
     		str_trim_lf(message, LENGTH);
 
+		//todo: Server bot cmd.
 		if(strcmp(message, "CMD:help") == 0)
 		{
 			printHelp("-r");
@@ -162,12 +164,23 @@ void recv_msg_handler()
 
 		if(receive > 0)
 		{
-			printf("%s \n", message);
-			str_overwrite_stdout();
+			if(strncmp(message, "SRV_BOT", 7) == 0)
+			{
+				printf("\033[96m");
+                                printf("%s", message);
+                                printf("\033[0m");
+                                str_overwrite_stdout();
+			}
+			else
+			{
+				printf("%s", message);
+				// printf("%s\n", message);
+				str_overwrite_stdout();
+			}
 		}
 		else
 		{
-			break;	
+			break;
 		}
 		memset(message, 0, sizeof(message));
 	}
@@ -270,12 +283,15 @@ int main(int argc, char **argv)
 	const int Vesrsion = 0;
 	const char *AppName = "Client";
 	const int Release = 1;
-	const int Revision = 8;
+	const int Revision = 11;
 
 	// Standard parameters.
 	char *ip = "127.0.0.1";
 	int port = 10117;
-	char *pswd = "117";
+	char *pswd="117";
+
+	//Set default server key (for Server 0.1.7 < ...)
+	strcpy(key, "117");
 
 	// Check keys.
 	if(strcmp(argv[1], "-h") == 0 || strcmp(argv[1], "--help") == 0)
@@ -349,11 +365,22 @@ int main(int argc, char **argv)
 	printf("\033[90m");
 	printf("Server IP address: %s \n", ip);
 	printf("Server Port: %d \n", port);
-	printf("Server Password: %s \n", pswd);
 	printf("\033[0m");
 
 	signal(SIGINT, catch_ctrl_c_and_exit);
 
+	// Cient - Enter server key.
+	printf("[?] - Please enter server key: ");
+	fgets(key, 128, stdin);
+	str_trim_lf(key, strlen(key));
+
+	if(strlen(key) > 128 || strlen(key) < 1)
+        {
+                printf("[!] - Server key must be less than 128 and more than 1 characters!\n");
+                return EXIT_FAILURE;
+        }
+
+	// Client - Enter name.
 	printf("[?] - Please enter your name: ");
 	fgets(name, 32, stdin);
 	str_trim_lf(name, strlen(name));
@@ -379,6 +406,9 @@ int main(int argc, char **argv)
 		printf("[!] - ERROR: connect!\n");
 		return EXIT_FAILURE;
 	}
+
+	// Send key server to Server
+	send(sockfd, key, 128, 0);
 
 	// Send name to Server.
 	send(sockfd, name, 32, 0);

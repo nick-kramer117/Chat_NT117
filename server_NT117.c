@@ -16,6 +16,8 @@
 
 static _Atomic unsigned int cli_count = 0;
 static int uid = 10;
+char server_key[128];
+char server_bot_name[8] = "SRV_BOT";
 
 // Client structure.
 typedef struct
@@ -24,6 +26,7 @@ typedef struct
 	int sockfd;
 	int uid;
 	char name[32];
+	char key[128];
 } client_t;
 
 client_t *clients[MAX_CLIENTS];
@@ -108,7 +111,7 @@ void send_message(char *s, int uid)
 			{
 				if(write(clients[i]->sockfd, s, strlen(s)) < 0)
 				{
-					perror("[!] - ERROR: write to descriptor failed");
+					perror("ERROR: write to descriptor failed");
 					break;
 				}
 			}
@@ -131,7 +134,7 @@ void send_message_u(char *s, int uid)
                         {
                                 if(write(clients[i]->sockfd, s, strlen(s)) < 0)
                                 {
-                                        perror("[!] - ERROR: write to descriptor failed");
+                                        perror("ERROR: write to descriptor failed");
                                         break;
                                 }
                         }
@@ -146,22 +149,52 @@ void *handle_client(void *arg)
 {
 	char buff_out[BUFFER_SZ];
 	char name[32];
+	char key[128];
+
 	int leave_flag = 0;
 
 	cli_count++;
 	client_t *cli = (client_t *)arg;
 
-	// Name.
-	if(recv(cli->sockfd, name, 32, 0) <= 0 || strlen(name) <  2 || strlen(name) >= 32-1)
+	// Check server key
+	if(recv(cli->sockfd, key, 128, 0) <= 0|| strlen(key) < 1 || strlen(key) >= 128-1)
 	{
-		printf("[!] - Didn't enter the name.\n");
+		printf("ERROR: Client haven't server key (or not enter server key)\n");
 		leave_flag = 1;
 	}
 	else
 	{
-		strcpy(cli->name, name);
-		sprintf(buff_out, "%s has joined\n", cli->name);
-		printf("%s", buff_out);
+		if(strcmp(key, server_key) == 0)
+		{
+			strcpy(cli->key, key);
+			printf("INFO: Client enter key server: %s\n", key);
+
+			// Check Name.
+        		if(recv(cli->sockfd, name, 32, 0) <= 0 || strlen(name) <  2 || strlen(name) >= 32-1)
+			{
+				printf("ERROR: Client didn't enter the name\n");
+               			leave_flag = 1;
+        		}
+			else if(strcmp(name, server_bot_name) == 0)
+			{
+				printf("ERROR: Client enter name as bot %s\n", server_bot_name);
+				leave_flag = 1;
+			}
+        		else
+			{
+				strcpy(cli->name, name);
+               			sprintf(buff_out, "USER: %s has joined.\n", cli->name);
+               			printf("%s", buff_out);
+
+                		sprintf(buff_out, "%s: - Hi %s. Welcome to Hellrest server. \n", server_bot_name, cli->name);
+               			send_message_u(buff_out, cli->uid);
+			}
+		}
+		else
+		{
+			printf("ERROR: Client enter fake key: %s\n", key);
+			leave_flag = 1;
+		}
 	}
 
 	bzero(buff_out, BUFFER_SZ);
@@ -180,12 +213,13 @@ void *handle_client(void *arg)
 			{
 				sprintf(buff_out, "SRV_BOT: ID - %u | Username: %s \n", cli->uid ,cli->name);
 				send_message_u(buff_out, cli->uid);
+				printf("USER: %s call bot.\n", cli->name);
 			}
 			else if(strlen(buff_out) > 0)
 			{
 				send_message(buff_out, cli->uid);
 				str_trim_lf(buff_out, strlen(buff_out));
-				printf("%s -> %s\n", buff_out, cli->name);
+				printf("USER: %s -> Send msg.\n", cli->name);
 			}
 			else
 			{
@@ -195,7 +229,7 @@ void *handle_client(void *arg)
 		else if (receive == 0 || strcmp(buff_out, "CMD:exit") == 0)
 		{
 			// Output: left user.
-			sprintf(buff_out, "%s has left\n", cli->name);
+			sprintf(buff_out, "USER: %s has left\n", cli->name);
 			printf("%s", buff_out);
 			leave_flag = 1;
 		}
@@ -223,14 +257,14 @@ int main(int argc, char **argv)
 	// Standard parameters.
 	char *ip = "127.0.0.1";
 	int port = 10117;
-	char *pswd = "117";
+	strcpy(server_key, "117");
 
 	if(argc == 4)
 	{
 		printf("[+] - Set Administrator setting.\n");
 		ip = argv[1];
 		port = atoi(argv[2]);
-		pswd = argv[3];
+		strcpy(server_key, argv[3]);
 	}
 	else if(argc == 3)
 	{
@@ -256,7 +290,7 @@ int main(int argc, char **argv)
 	printf("\033[90m");
 	printf("Server IP address: %s \n", ip);
 	printf("Server Port: %d \n", port);
-	printf("Server Password: %s \n", pswd);
+	printf("Server Key: %s \n", server_key);
 	printf("\033[0m");
 
 	int option = 1;
@@ -294,7 +328,7 @@ int main(int argc, char **argv)
     		return EXIT_FAILURE;
 	}
 
-	printf("--=== WELCOME TO THE CHAT NT117 v0 (Server v0.1.6) ===--\n");
+	printf("--=== WELCOME TO THE CHAT NT117 v0 (Server v0.1.9) ===--\n");
 
 	while(1)
 	{
